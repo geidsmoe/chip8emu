@@ -24,21 +24,78 @@ fn main() -> Result<(), Box<dyn Error>> {
         return Err("not enough arguments".into());
     }
 
+<<<<<<< Updated upstream
+=======
+    // components
+    let mut memory: [u8; 4096] = [0; 4096];
+    let mut display: [u8; 8192] = [0; 8192];
+    let mut pc: u16 = 0x0200;
+    let mut idx_reg: u16 = 0;
+    let mut delay_timer: u8 = 0;
+    let mut sound_timer: u8 = 0;
+    let mut stack: Vec<u16> = Vec::new();
+    let mut registers: [u8; 16] = [0; 16];
+
+    // Read ROM into Memory
+>>>>>>> Stashed changes
     let file_path = args[1].clone();
     let bytes: Vec<u8> = fs::read(Path::new(&file_path))?;
-    let opcodes: Vec<_>  = bytes.chunks(2).collect();
-    // println!("{:X?}", bytes); // prints "[DE, AD, BE, EF]"
+    let mut i = 0x0200;
+    for b in bytes {
+        memory[i] = b;
+        i+=1;
+    }
     
+<<<<<<< Updated upstream
     for op in opcodes {
         // TODO: better chunking + destructuring
         let [op1, op2] = op else { continue };
         match (*op1, *op2) {
             (0x00, 0xE0) => println!("{:X?} => Clear", op),
+=======
+    loop {
+        // fetch and increment
+        let op1 = memory[pc as usize];
+        let op2 = memory[(pc+1) as usize];
+        let op = (op1, op2);
+        pc += 2;
+
+        // Extract the 4 nibbles and numbers
+        let n1 = (op1 >> 4) & 0x0F;   // First nibble (opcode type)
+        let n2 = op1 & 0x0F;          // Second nibble (often x)
+        let n3 = (op2 >> 4) & 0x0F;   // Third nibble (often y)
+        let n4 = op2 & 0x0F;          // Fourth nibble (often n)
+        let nn = op2;
+        let nnn = ((n2 as u16) << 8) | op2 as u16;
+
+        // execute
+        match (n1, n2, n3, n4) {
+            (0x0, 0x0, 0xE, 0x0) => println!("{:X?} => Clear", op),
+            (0x6, _, _, _) => {
+                println!("{:X?} => Load x{} with {}", op, n2, nn);
+
+                registers[n2 as usize] = nn;
+            },
+            (0xA, _, _, _) => {
+                println!("{:X?} => Load idx reg with {}", op, nnn);
+
+                idx_reg = nnn;
+            },
+            (0x7, _, _, _) => {
+                println!("{:X?} => Add value {} to register x{}", op, nn, n4);
+
+                registers[n2 as usize] += nn;
+            },
+            (0xD, _, _, _) => println!("{:X?} => Draw sprite to screen value", op),
+            (0x1, _, _, _) => {
+                println!("{:X?} => Jump pc to {}", op, nnn);
+
+                pc = nnn;
+            }
+>>>>>>> Stashed changes
             _ => println!("{:X?} => Not implemented", op)
         }
     }
-
-    screen::draw();
 
     Ok(())
 }
