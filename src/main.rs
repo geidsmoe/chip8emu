@@ -24,8 +24,6 @@ fn main() -> Result<(), Box<dyn Error>> {
         return Err("not enough arguments".into());
     }
 
-<<<<<<< Updated upstream
-=======
     // components
     let mut memory: [u8; 4096] = [0; 4096];
     let mut display: [u8; 8192] = [0; 8192];
@@ -37,7 +35,6 @@ fn main() -> Result<(), Box<dyn Error>> {
     let mut registers: [u8; 16] = [0; 16];
 
     // Read ROM into Memory
->>>>>>> Stashed changes
     let file_path = args[1].clone();
     let bytes: Vec<u8> = fs::read(Path::new(&file_path))?;
     let mut i = 0x0200;
@@ -46,13 +43,6 @@ fn main() -> Result<(), Box<dyn Error>> {
         i+=1;
     }
     
-<<<<<<< Updated upstream
-    for op in opcodes {
-        // TODO: better chunking + destructuring
-        let [op1, op2] = op else { continue };
-        match (*op1, *op2) {
-            (0x00, 0xE0) => println!("{:X?} => Clear", op),
-=======
     loop {
         // fetch and increment
         let op1 = memory[pc as usize];
@@ -92,7 +82,6 @@ fn main() -> Result<(), Box<dyn Error>> {
 
                 pc = nnn;
             }
->>>>>>> Stashed changes
             _ => println!("{:X?} => Not implemented", op)
         }
     }
