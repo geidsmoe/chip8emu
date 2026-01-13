@@ -12,13 +12,35 @@ use std::thread;
 
 const BASE_W: u32 = 64;
 const BASE_H: u32 = 32;
-const SCALE_FACTOR: u32 = 10;
+const SCALE_FACTOR: u32 = 20;
 
-struct Graphics {
-    sdl_context: Sdl,
-    canvas: Canvas<Window>
+pub struct Graphics {
+    pub sdl_context: Sdl,
+    pub canvas: Canvas<Window>
 }
 impl Graphics {
+    pub fn set(&mut self, x: u32, y: u32) {
+        self.canvas.set_draw_color(Color::RGB(0, 255, 255));
+
+        let pixel: Rect = Rect::new(
+            (x * SCALE_FACTOR).try_into().unwrap(),
+            (y * SCALE_FACTOR).try_into().unwrap(),
+            1 * SCALE_FACTOR,
+            1 * SCALE_FACTOR,
+        );
+        self.canvas.fill_rect(pixel).unwrap();
+        self.canvas.present();
+
+        self.canvas.set_draw_color(Color::RGB(0, 0, 0));
+    }
+
+    pub fn clear(&mut self) {
+        self.canvas.set_draw_color(Color::RGB(0,0,0));
+        self.canvas.clear();
+
+        self.canvas.present();
+    }
+
     pub fn new () -> Graphics {
         let sdl_context = sdl3::init().unwrap();
         let video_subsystem = sdl_context.video().unwrap();
