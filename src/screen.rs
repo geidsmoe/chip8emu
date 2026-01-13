@@ -30,14 +30,12 @@ impl Graphics {
         );
         self.canvas.fill_rect(pixel).unwrap();
         self.canvas.present();
-
-        self.canvas.set_draw_color(Color::RGB(0, 0, 0));
+        // self.canvas.set_draw_color(Color::RGB(0, 0, 0));
     }
 
     pub fn clear(&mut self) {
-        self.canvas.set_draw_color(Color::RGB(0,0,0));
+        self.canvas.set_draw_color(Color::RGB(255,0,0));
         self.canvas.clear();
-
         self.canvas.present();
     }
 

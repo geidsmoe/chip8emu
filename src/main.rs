@@ -38,6 +38,34 @@ fn main() -> Result<(), Box<dyn Error>> {
     let mut stack: Vec<u16> = Vec::new();
     let mut registers: [u8; 16] = [0; 16];
 
+
+
+    let font: [u8; 80] = [
+        0xF0, 0x90, 0x90, 0x90, 0xF0, // 0
+        0x20, 0x60, 0x20, 0x20, 0x70, // 1
+        0xF0, 0x10, 0xF0, 0x80, 0xF0, // 2
+        0xF0, 0x10, 0xF0, 0x10, 0xF0, // 3
+        0x90, 0x90, 0xF0, 0x10, 0x10, // 4
+        0xF0, 0x80, 0xF0, 0x10, 0xF0, // 5
+        0xF0, 0x80, 0xF0, 0x90, 0xF0, // 6
+        0xF0, 0x10, 0x20, 0x40, 0x40, // 7
+        0xF0, 0x90, 0xF0, 0x90, 0xF0, // 8
+        0xF0, 0x90, 0xF0, 0x10, 0xF0, // 9
+        0xF0, 0x90, 0xF0, 0x90, 0x90, // A
+        0xE0, 0x90, 0xE0, 0x90, 0xE0, // B
+        0xF0, 0x80, 0x80, 0x80, 0xF0, // C
+        0xE0, 0x90, 0x90, 0x90, 0xE0, // D
+        0xF0, 0x80, 0xF0, 0x80, 0xF0, // E
+        0xF0, 0x80, 0xF0, 0x80, 0x80  // F
+    ];
+
+    let mut j = 0x0050;
+    for b in font {
+        memory[j] = b;
+        j+=1;
+    }
+    
+
     // Read ROM into Memory
     let file_path = args[1].clone();
     let bytes: Vec<u8> = fs::read(Path::new(&file_path))?;
@@ -48,7 +76,6 @@ fn main() -> Result<(), Box<dyn Error>> {
     }
     let mut graphics = screen::Graphics::new();
     graphics.clear();
-    graphics.set(5, 5);
     
     'running: loop {
         // fetch and increment
@@ -69,7 +96,6 @@ fn main() -> Result<(), Box<dyn Error>> {
         match (n1, n2, n3, n4) {
             (0x0, 0x0, 0xE, 0x0) => {
                 graphics.clear();
-                graphics.set(5,5);
                 println!("{:X?} => Clear", op)
             },
             (0x6, _, _, _) => {
@@ -87,7 +113,27 @@ fn main() -> Result<(), Box<dyn Error>> {
 
                 registers[n2 as usize] += nn;
             },
-            (0xD, _, _, _) => println!("{:X?} => Draw sprite to screen value", op),
+            (0xD, _, _, _) => {
+                let x = registers[n2 as usize];
+                let y = registers[n3 as usize];
+                let height: u16 = n4 as u16;
+                let sprite_idx = idx_reg;
+                let range_start = ((0x0050 + sprite_idx) as usize);
+
+                for i in 0..0xf {
+                    let byte = memory[(range_start + i) as usize];
+                    for j in 0..8 {
+                        let bit_value = byte & (1<<(7 - j));
+                        let on = bit_value > 0;
+                        if (on) {
+                            graphics.set(x as u32 + j as u32, y as u32 + i as u32);
+                        }
+                    }
+                }
+                // graphics.canvas.present();
+               
+                println!("{:X?} => Draw sprite to screen value", op);
+            },
             (0x1, _, _, _) => {
                 println!("{:X?} => Jump pc to {}", op, nnn);
                 pc = nnn;
