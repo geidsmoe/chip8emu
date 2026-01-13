@@ -1,39 +1,79 @@
-use std::error::Error;
-use std::{env, fs};
-use std::path::Path;
+extern crate sdl3;
+
+use sdl3::pixels::Color;
+use sdl3::event::Event;
+use sdl3::keyboard::Keycode;
+use sdl3::rect::Rect;
+use std::time::Duration;
+use std::thread;
+
+const BASE_W: u32 = 64;
+const BASE_H: u32 = 32;
+const SCALE_FACTOR: u32 = 10;
 
 
-// Run the ROM for 20 cycles to see the IBM logo on the display. If you can see the IBM logo, you are properly interpreting these opcodes:
 
-// 00E0 - Clear the screen
-// 6xnn - Load normal register with immediate value
-// Annn - Load index register with immediate value
-// 7xnn - Add immediate value to normal register
-// Dxyn - Draw sprite to screen (un-aligned)
-// If you run the ROM for more than 20 cycles, it will enter an endless loop. If that also works as expected, you've also correctly interpreted the jump opcode:
+pub fn main() {
+    let sdl_context = sdl3::init().unwrap();
+    let video_subsystem = sdl_context.video().unwrap();
 
-// 1nnn - Jump
+    let window = video_subsystem.window(
+        "CHIP-9 🍐",
+        BASE_W * SCALE_FACTOR,
+        BASE_H * SCALE_FACTOR
+    )
+        .position_centered()
+        .build()
+        .unwrap();
 
-fn main() -> Result<(), Box<dyn Error>> {
-    let args: Vec<String> = env::args().collect();
+    let mut canvas = window.into_canvas();
 
-    if args.len() != 2 {
-        return Err("not enough arguments".into());
-    }
+    canvas.set_draw_color(Color::RGB(0, 255, 255));
+    canvas.clear();
+    canvas.present();
+    let mut event_pump = sdl_context.event_pump().unwrap();
+    let mut i = 0;
+    'running: loop {
+        i = (i + 1) % 255;
+        canvas.set_draw_color(Color::RGB(0,0,0));
+        canvas.clear();
 
-    let file_path = args[1].clone();
-    let bytes: Vec<u8> = fs::read(Path::new(&file_path))?;
-    let opcodes: Vec<_>  = bytes.chunks(2).collect();
-    // println!("{:X?}", bytes); // prints "[DE, AD, BE, EF]"
-    
-    for op in opcodes {
-        // TODO: better chunking + destructuring
-        let [op1, op2] = op else { continue };
-        match (*op1, *op2) {
-            (0x00, 0xE0) => println!("{:X?} => Clear", op),
-            _ => println!("{:X?} => Not implemented", op)
+        canvas.set_draw_color(Color::RGB(i, 64, 255 - i));
+        let pixel: Rect = Rect::new(
+            (0 * SCALE_FACTOR).try_into().unwrap(),
+            (0 * SCALE_FACTOR).try_into().unwrap(),
+            1 * SCALE_FACTOR,
+            1 * SCALE_FACTOR,
+        );
+        canvas.fill_rect(pixel).unwrap();
+
+        let pixels: [[bool;64];32] = [[false;64];32];
+        let screen = Screen{ pixels };
+
+        for event in event_pump.poll_iter() {
+            match event {
+                Event::Quit {..} |
+                Event::KeyDown { keycode: Some(Keycode::Escape), .. } => {
+                    break 'running
+                },
+                _ => {}
+            }
         }
-    }
+        // The rest of the game loop goes here...
 
-    Ok(())
+        canvas.present();
+        thread::sleep(Duration::new(0, 1_000_000_000u32 / 60));
+    }
+}
+
+// Take Hexidecimal instructions
+// Turn into an array of rects to fill
+// fixed-size array of 64x32 of booleans
+// fill_rect can take array of rects to fill
+
+struct Screen {
+    pixels: [[bool;64];32]
+
+    // draw returns an array of rects
+    // set_pixel method takes row, column
 }
