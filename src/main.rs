@@ -1,3 +1,5 @@
+mod screen;
+
 use std::error::Error;
 use std::{env, fs};
 use std::path::Path;
@@ -15,6 +17,7 @@ use std::path::Path;
 // 1nnn - Jump
 
 fn main() -> Result<(), Box<dyn Error>> {
+
     let args: Vec<String> = env::args().collect();
 
     if args.len() != 2 {
@@ -34,6 +37,8 @@ fn main() -> Result<(), Box<dyn Error>> {
             _ => println!("{:X?} => Not implemented", op)
         }
     }
+
+    screen::draw();
 
     Ok(())
 }

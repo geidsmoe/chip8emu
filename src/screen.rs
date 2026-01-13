@@ -1,9 +1,12 @@
 extern crate sdl3;
 
+use sdl3::Sdl;
+use sdl3::render::Canvas;
 use sdl3::pixels::Color;
 use sdl3::event::Event;
 use sdl3::keyboard::Keycode;
 use sdl3::rect::Rect;
+use sdl3::video::Window;
 use std::time::Duration;
 use std::thread;
 
@@ -11,27 +14,47 @@ const BASE_W: u32 = 64;
 const BASE_H: u32 = 32;
 const SCALE_FACTOR: u32 = 10;
 
+struct Graphics {
+    sdl_context: Sdl,
+    canvas: Canvas<Window>
+}
+impl Graphics {
+    pub fn new () -> Graphics {
+        let sdl_context = sdl3::init().unwrap();
+        let video_subsystem = sdl_context.video().unwrap();
 
+        let window = video_subsystem.window(
+            "CHIP-9 🍐",
+            BASE_W * SCALE_FACTOR,
+            BASE_H * SCALE_FACTOR
+        )
+            .position_centered()
+            .build()
+            .unwrap();
 
-pub fn main() {
-    let sdl_context = sdl3::init().unwrap();
-    let video_subsystem = sdl_context.video().unwrap();
+        let mut canvas = window.into_canvas();
 
-    let window = video_subsystem.window(
-        "CHIP-9 🍐",
-        BASE_W * SCALE_FACTOR,
-        BASE_H * SCALE_FACTOR
-    )
-        .position_centered()
-        .build()
-        .unwrap();
+        canvas.set_draw_color(Color::RGB(0, 255, 255));
+        canvas.clear();
+        canvas.present();
 
-    let mut canvas = window.into_canvas();
+        return Graphics {
+            sdl_context: sdl_context,
+            canvas: canvas
+        }
+    }
+}
 
-    canvas.set_draw_color(Color::RGB(0, 255, 255));
-    canvas.clear();
-    canvas.present();
-    let mut event_pump = sdl_context.event_pump().unwrap();
+struct Screen {
+    pixels: [[bool;64];32]
+    // draw returns an array of rects
+    // set_pixel method takes row, column
+}
+
+pub fn draw() {
+    let graphics = Graphics::new();
+    let mut canvas = graphics.canvas;
+    let mut event_pump = graphics.sdl_context.event_pump().unwrap();
     let mut i = 0;
     'running: loop {
         i = (i + 1) % 255;
@@ -70,10 +93,3 @@ pub fn main() {
 // Turn into an array of rects to fill
 // fixed-size array of 64x32 of booleans
 // fill_rect can take array of rects to fill
-
-struct Screen {
-    pixels: [[bool;64];32]
-
-    // draw returns an array of rects
-    // set_pixel method takes row, column
-}
