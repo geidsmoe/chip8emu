@@ -29,14 +29,35 @@ impl Graphics {
             1 * SCALE_FACTOR,
         );
         self.canvas.fill_rect(pixel).unwrap();
-        self.canvas.present();
-        // self.canvas.set_draw_color(Color::RGB(0, 0, 0));
     }
 
     pub fn clear(&mut self) {
-        self.canvas.set_draw_color(Color::RGB(255,0,0));
+        self.canvas.set_draw_color(Color::RGB(0, 0, 0));
         self.canvas.clear();
+    }
+
+    pub fn present(&mut self) {
         self.canvas.present();
+    }
+
+    /// Draw the entire display from a 64x32 pixel buffer
+    pub fn draw_display(&mut self, display: &[[bool; 64]; 32]) {
+        self.clear();
+        self.canvas.set_draw_color(Color::RGB(0, 255, 255));
+        for (y, row) in display.iter().enumerate() {
+            for (x, &pixel) in row.iter().enumerate() {
+                if pixel {
+                    let rect = Rect::new(
+                        (x as u32 * SCALE_FACTOR) as i32,
+                        (y as u32 * SCALE_FACTOR) as i32,
+                        SCALE_FACTOR,
+                        SCALE_FACTOR,
+                    );
+                    self.canvas.fill_rect(rect).unwrap();
+                }
+            }
+        }
+        self.present();
     }
 
     pub fn new () -> Graphics {

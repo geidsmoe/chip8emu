@@ -8,7 +8,6 @@ use sdl3::keyboard::Keycode;
 use std::time::Duration;
 use std::thread;
 
-
 // Run the ROM for 20 cycles to see the IBM logo on the display. If you can see the IBM logo, you are properly interpreting these opcodes:
 
 // 00E0 - Clear the screen
@@ -30,7 +29,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     // components
     let mut memory: [u8; 4096] = [0; 4096];
-    let mut display: [u8; 8192] = [0; 8192];
+    let mut display: [[bool; 64]; 32] = [[false; 64]; 32];  // 64x32 pixel buffer
     let mut pc: u16 = 0x0200;
     let mut idx_reg: u16 = 0;
     let mut delay_timer: u8 = 0;
@@ -75,7 +74,6 @@ fn main() -> Result<(), Box<dyn Error>> {
         i+=1;
     }
     let mut graphics = screen::Graphics::new();
-    graphics.clear();
     
     'running: loop {
         // fetch and increment
@@ -95,7 +93,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         // execute
         match (n1, n2, n3, n4) {
             (0x0, 0x0, 0xE, 0x0) => {
-                graphics.clear();
+                display = [[false; 64]; 32];  // Clear the display buffer
                 println!("{:X?} => Clear", op)
             },
             (0x6, _, _, _) => {
@@ -109,30 +107,37 @@ fn main() -> Result<(), Box<dyn Error>> {
                 idx_reg = nnn;
             },
             (0x7, _, _, _) => {
-                println!("{:X?} => Add value {} to register x{}", op, nn, n4);
+                println!("{:X?} => Add value {} to register x{}", op, nn, n2);
 
                 registers[n2 as usize] += nn;
             },
             (0xD, _, _, _) => {
-                let x = registers[n2 as usize];
-                let y = registers[n3 as usize];
-                let height: u16 = n4 as u16;
-                let sprite_idx = idx_reg;
-                let range_start = ((0x0050 + sprite_idx) as usize);
+                let x = registers[n2 as usize] as usize;
+                let y = registers[n3 as usize] as usize;
+                let height = n4 as usize;
+                let range_start = idx_reg as usize;
 
-                for i in 0..0xf {
-                    let byte = memory[(range_start + i) as usize];
-                    for j in 0..8 {
-                        let bit_value = byte & (1<<(7 - j));
-                        let on = bit_value > 0;
-                        if (on) {
-                            graphics.set(x as u32 + j as u32, y as u32 + i as u32);
+                // VF set to 1 if any pixel is erased (collision)
+                registers[0xF] = 0;
+
+                for row in 0..height {
+                    let byte = memory[range_start + row];
+                    for col in 0..8 {
+                        let bit_value = byte & (1 << (7 - col));
+                        if bit_value > 0 {
+                            // Wrap coordinates (CHIP-8 wraps around screen edges)
+                            let px = (x + col) % 64;
+                            let py = (y + row) % 32;
+                            // XOR the pixel - if it was on and turns off, set collision flag
+                            if display[py][px] {
+                                registers[0xF] = 1;
+                            }
+                            display[py][px] ^= true;
                         }
                     }
                 }
-                // graphics.canvas.present();
                
-                println!("{:X?} => Draw sprite to screen value", op);
+                println!("{:X?} => Draw sprite to screen", op);
             },
             (0x1, _, _, _) => {
                 println!("{:X?} => Jump pc to {}", op, nnn);
@@ -140,6 +145,10 @@ fn main() -> Result<(), Box<dyn Error>> {
             }
             _ => println!("{:X?} => Not implemented", op)
         }
+
+        // Redraw entire display from buffer each frame
+        graphics.draw_display(&display);
+
         let mut event_pump = graphics.sdl_context.event_pump().unwrap();
         for event in event_pump.poll_iter() {
             match event {
