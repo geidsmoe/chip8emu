@@ -86,49 +86,48 @@ impl Graphics {
     }
 }
 
-struct Screen {
-    pixels: [[bool;64];32]
-    // draw returns an array of rects
-    // set_pixel method takes row, column
-}
+// struct Screen {
+//     pixels: [[bool;64];32]
+//     // draw returns an array of rects
+//     // set_pixel method takes row, column
+// }
 
-pub fn draw() {
-    let graphics = Graphics::new();
-    let mut canvas = graphics.canvas;
-    let mut event_pump = graphics.sdl_context.event_pump().unwrap();
-    let mut i = 0;
-    'running: loop {
-        i = (i + 1) % 255;
-        canvas.set_draw_color(Color::RGB(0,0,0));
-        canvas.clear();
+// pub fn draw() {
+//     let graphics = Graphics::new();
+//     let mut canvas = graphics.canvas;
+//     let mut event_pump = graphics.sdl_context.event_pump().unwrap();
+//     let mut i = 0;
+//     'running: loop {
+//         i = (i + 1) % 255;
+//         canvas.set_draw_color(Color::RGB(0,0,0));
+//         canvas.clear();
 
-        canvas.set_draw_color(Color::RGB(i, 64, 255 - i));
-        let pixel: Rect = Rect::new(
-            (0 * SCALE_FACTOR).try_into().unwrap(),
-            (0 * SCALE_FACTOR).try_into().unwrap(),
-            1 * SCALE_FACTOR,
-            1 * SCALE_FACTOR,
-        );
-        canvas.fill_rect(pixel).unwrap();
+//         canvas.set_draw_color(Color::RGB(i, 64, 255 - i));
+//         let pixel: Rect = Rect::new(
+//             (0 * SCALE_FACTOR).try_into().unwrap(),
+//             (0 * SCALE_FACTOR).try_into().unwrap(),
+//             1 * SCALE_FACTOR,
+//             1 * SCALE_FACTOR,
+//         );
+//         canvas.fill_rect(pixel).unwrap();
 
-        let pixels: [[bool;64];32] = [[false;64];32];
-        let screen = Screen{ pixels };
+//         let pixels: [[bool;64];32] = [[false;64];32];
 
-        for event in event_pump.poll_iter() {
-            match event {
-                Event::Quit {..} |
-                Event::KeyDown { keycode: Some(Keycode::Escape), .. } => {
-                    break 'running
-                },
-                _ => {}
-            }
-        }
-        // The rest of the game loop goes here...
+//         for event in event_pump.poll_iter() {
+//             match event {
+//                 Event::Quit {..} |
+//                 Event::KeyDown { keycode: Some(Keycode::Escape), .. } => {
+//                     break 'running
+//                 },
+//                 _ => {}
+//             }
+//         }
+//         // The rest of the game loop goes here...
 
-        canvas.present();
-        thread::sleep(Duration::new(0, 1_000_000_000u32 / 60));
-    }
-}
+//         canvas.present();
+//         thread::sleep(Duration::new(0, 1_000_000_000u32 / 60));
+//     }
+// }
 
 // Take Hexidecimal instructions
 // Turn into an array of rects to fill

@@ -97,7 +97,7 @@ fn main() -> Result<(), Box<dyn Error>> {
                 println!("{:X?} => Clear", op)
             },
             (0x6, _, _, _) => {
-                println!("{:X?} => Load x{} with {}", op, n2, nn);
+                println!("{:X?} => Load V{} with {}", op, n2, nn);
 
                 registers[n2 as usize] = nn;
             },
@@ -107,7 +107,7 @@ fn main() -> Result<(), Box<dyn Error>> {
                 idx_reg = nnn;
             },
             (0x7, _, _, _) => {
-                println!("{:X?} => Add value {} to register x{}", op, nn, n2);
+                println!("{:X?} => Add value {} to register V{}", op, nn, n2);
 
                 registers[n2 as usize] += nn;
             },
@@ -142,7 +142,40 @@ fn main() -> Result<(), Box<dyn Error>> {
             (0x1, _, _, _) => {
                 println!("{:X?} => Jump pc to {}", op, nnn);
                 pc = nnn;
-            }
+            },
+            (0x2, _, _, _) => {
+                println!("{:X?} => Call subroutine at {}", op, nnn);
+                stack.push(pc);
+                pc = nnn;
+            },
+            (0x0, 0x0, 0xE, 0xE) => {
+                println!("{:X?} => Return from subroutine", op);
+                pc = stack.pop().unwrap();
+            },
+            (0x3, _, _, _) => {
+                println!("{:X?} => Skip next instruction if V{} == {}", op, n2, nn);
+                if registers[n2 as usize] == nn {
+                    pc += 2;
+                }
+            },
+            (0x4, _, _, _) => {
+                println!("{:X?} => Skip next instruction if V{} != {}", op, n2, nn);
+                if registers[n2 as usize] != nn {
+                    pc += 2;
+                }
+            },
+            (0x5, _, _, 0x0) => {
+                println!("{:X?} => Skip next instruction if V{} == V{}", op, n2, n3);
+                if registers[n2 as usize] == registers[n3 as usize] {
+                    pc += 2;
+                }
+            },
+            (0x9, _, _, 0x0) => {
+                println!("{:X?} => Skip next instruction if V{} != V{}", op, n2, n3);
+                if registers[n2 as usize] != registers[n3 as usize] {
+                    pc += 2;
+                }
+            },
             _ => println!("{:X?} => Not implemented", op)
         }
 
